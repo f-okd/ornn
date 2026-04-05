@@ -1,5 +1,6 @@
-use core::error;
 use std::{env, io};
+
+mod token;
 
 struct Ornn {
     had_error: bool,
@@ -27,8 +28,8 @@ fn main() {
     interpreter.start();
 }
 
-fn run_file() {
-    println!("Interpreting file...");
+fn run_file(filename: &str) {
+    println!("Interpreting file at {}...", filename);
 }
 
 fn run_prompt() {
@@ -52,7 +53,7 @@ fn run_prompt() {
 }
 
 fn run(command: &str) {
-    println!("Running ")
+    println!("Executing command: {}", command)
 }
 
 fn error(interpreter: &mut Ornn, line: i32, message: &str) {
