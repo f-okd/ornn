@@ -55,10 +55,13 @@ fn run(command: &str) {
     println!("Running ")
 }
 
-fn error(line: i32, message: &str) {
-    report(line, "", message);
+fn error(interpreter: &mut Ornn, line: i32, message: &str) {
+    report(interpreter, line, "", message);
 }
 
-fn report(line: i32, location: &str, message: &str) {
-    panic!("[Line {}] Error {}: {}", line, location, message);
+fn report(interpreter: &mut Ornn, line: i32, location: &str, message: &str) {
+    eprintln!("[Line {}] Error {}: {}", line, location, message);
+
+    interpreter.had_error = true;
+    return;
 }
