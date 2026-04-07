@@ -1,5 +1,8 @@
 use std::{env, io};
 
+use crate::lexer::{Lexer, scan_tokens};
+
+mod lexer;
 mod token;
 
 struct Ornn {
@@ -53,16 +56,31 @@ fn run_prompt() {
 }
 
 fn run(command: &str) {
-    println!("Executing command: {}", command)
+    let mut lexer = Lexer::new(command);
+    lexer = scan_tokens(lexer);
+
+    for tkn in lexer.tokens {
+        println!("Token: {}", tkn.lexeme);
+    }
 }
 
-fn error(interpreter: &mut Ornn, line: i32, message: &str) {
-    report(interpreter, line, "", message);
+// fn error(interpreter: &mut Ornn, line: i32, message: &str) {
+//     report(interpreter, line, "", message);
+// }
+
+// fn report(interpreter: &mut Ornn, line: i32, location: &str, message: &str) {
+//     eprintln!("[Line {}] Error {}: {}", line, location, message);
+
+//     interpreter.had_error = true;
+//     return;
+// }
+
+fn error(line: i32, message: &str) {
+    report(line, "", message);
 }
 
-fn report(interpreter: &mut Ornn, line: i32, location: &str, message: &str) {
+fn report(line: i32, location: &str, message: &str) {
     eprintln!("[Line {}] Error {}: {}", line, location, message);
 
-    interpreter.had_error = true;
     return;
 }

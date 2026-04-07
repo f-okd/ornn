@@ -1,3 +1,11 @@
+#[derive(Debug)]
+pub enum Literal {
+    Number(f64),
+    Str(String),
+    Bool(bool),
+    Nil,
+}
+
 #[derive(Debug, Clone)]
 pub enum TokenType {
     // Single-character tokens
@@ -48,26 +56,26 @@ pub enum TokenType {
 pub struct Token {
     pub token_type: TokenType,
     pub lexeme: String,
-    pub literal: String,
+    pub literal: Literal,
     pub line: i32,
 }
 
 impl Token {
-    pub fn new(token_type: TokenType, lexeme: &str, literal: &str, line: i32) -> Token {
+    pub fn new(token_type: TokenType, lexeme: &str, literal: Literal, line: i32) -> Token {
         Token {
             token_type,
             lexeme: String::from(lexeme),
-            literal: String::from(lexeme),
+            literal,
             line,
         }
     }
 
     fn to_string(&self) -> String {
         return format!(
-            "{:?} {} {}",
+            "{:?} {} {:?}",
             self.token_type,
             self.lexeme.as_str(),
-            self.literal.as_str(),
+            self.literal,
         );
     }
 }
