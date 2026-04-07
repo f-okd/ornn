@@ -16,7 +16,7 @@ impl Ornn {
 
     fn start(&self) {
         let args: Vec<String> = env::args().collect();
-        if args.len() < 2 {
+        if args.len() > 2 {
             println!("Interpreter expects 1 single argument.\nUsage: ornn [script]");
         } else if args.len() == 2 {
             run_file(&args[1]);
@@ -37,7 +37,6 @@ fn run_file(filename: &str) {
 
 fn run_prompt() {
     println!("Initialising interactive prompt...");
-
     let mut command = String::new();
 
     loop {
@@ -50,18 +49,20 @@ fn run_prompt() {
         if command.as_str() == "" {
             break;
         }
-    }
 
-    run(command.as_str());
+        run(command.as_str());
+    }
 }
 
 fn run(command: &str) {
     let mut lexer = Lexer::new(command);
     lexer = scan_tokens(lexer);
 
+    println!("Command: {}", command);
     for tkn in lexer.tokens {
-        println!("Token: {}", tkn.lexeme);
+        print!("[Token: {}, type: {:?}], ", tkn.lexeme, tkn.token_type);
     }
+    println!("Finished printing tokens");
 }
 
 // fn error(interpreter: &mut Ornn, line: i32, message: &str) {
