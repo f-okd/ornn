@@ -2,7 +2,9 @@ use std::{env, io};
 
 use crate::lexer::{Lexer, scan_tokens};
 
+mod ast;
 mod lexer;
+mod parser;
 mod token;
 
 struct Ornn {
