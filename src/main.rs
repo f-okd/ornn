@@ -1,6 +1,10 @@
 use std::{env, io};
 
-use crate::lexer::{Lexer, scan_tokens};
+use crate::{
+    ast::{expressions::Expr, printer::print_expression},
+    lexer::{Lexer, scan_tokens},
+    token::{Literal, Token, TokenType},
+};
 
 mod ast;
 mod lexer;
@@ -29,8 +33,23 @@ impl Ornn {
 }
 
 fn main() {
-    let interpreter = Ornn::new();
-    interpreter.start();
+    // let interpreter = Ornn::new();
+    // interpreter.start();
+    let expr = Expr::FunctionCall {
+        callee: Box::new(Expr::Variable {
+            name: Token::new(TokenType::IDENTIFIER, "myFunc", Literal::Nil, 1),
+        }),
+        paren: Token::new(TokenType::LEFT_PAREN, "(", Literal::Nil, 1),
+        arguments: vec![
+            Expr::Literal {
+                value: Literal::Number(1.0),
+            },
+            Expr::Literal {
+                value: Literal::Number(2.0),
+            },
+        ],
+    };
+    println!("{}", print_expression(&expr));
 }
 
 fn run_file(filename: &str) {
