@@ -1,4 +1,4 @@
-use crate::{ast::expressions::Expr, lexer::token::Token};
+use crate::{ast::expressions::Expr, token::Token};
 
 pub enum Stmt {
     /// Defines local scope

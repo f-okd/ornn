@@ -1,8 +1,6 @@
-pub mod token;
-
 use std::{collections::HashMap, num::ParseFloatError};
 
-use crate::lexer::token::{Literal, Token, TokenType};
+use crate::token::{Literal, Token, TokenType};
 
 /// Lexer scans raw source code text to produce flat list of tokens.
 pub struct Lexer {

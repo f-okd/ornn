@@ -1,4 +1,4 @@
-use crate::lexer::token::{Literal, Token};
+use crate::token::{Literal, Token};
 
 pub enum Expr {
     Assign {

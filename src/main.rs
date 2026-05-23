@@ -2,16 +2,14 @@ use std::{env, io};
 
 use crate::{
     ast::{expressions::Expr, printer::print_expression},
-    lexer::{
-        token::{Literal, Token, TokenType},
-        {Lexer, scan_tokens},
-    },
+    lexer::{Lexer, scan_tokens},
+    token::{Literal, Token, TokenType},
 };
 
 mod ast;
-mod interpreter;
 mod lexer;
 mod parser;
+mod token;
 
 struct Ornn {
     had_error: bool,
