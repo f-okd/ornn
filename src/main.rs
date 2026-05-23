@@ -3,6 +3,7 @@ use std::{env, io};
 use crate::{
     ast::{expressions::Expr, printer::print_expression},
     lexer::{Lexer, scan_tokens},
+    parser::Parser,
     token::{Literal, Token, TokenType},
 };
 
@@ -79,12 +80,25 @@ fn run_prompt() {
 fn run(command: &str) {
     let mut lexer = Lexer::new(command);
     lexer = scan_tokens(lexer);
+    let mut parser = Parser::new(lexer.tokens);
+    let expr = parser.parse();
 
-    println!("Command: {}", command);
-    for tkn in lexer.tokens {
-        print!("[Token: {}, type: {:?}], ", tkn.lexeme, tkn.token_type);
+    match expr {
+        Ok(expr) => {
+            let expr_as_string = print_expression(&expr);
+            println!("{}", expr_as_string)
+        }
+        Err(parse_err) => {
+            error(parse_err.token.line, parse_err.message.as_str());
+        }
     }
-    println!("Finished printing tokens");
+
+    // Print scanned tokens
+    // println!("Command: {}", command);
+    // for tkn in lexer.tokens {
+    //     print!("[Token: {}, type: {:?}], ", tkn.lexeme, tkn.token_type);
+    // }
+    // println!("Finished printing tokens");
 }
 
 // fn error(interpreter: &mut Ornn, line: i32, message: &str) {
