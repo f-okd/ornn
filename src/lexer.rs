@@ -13,6 +13,7 @@ pub struct Lexer {
     reserved_words: HashMap<String, TokenType>,
     /// Only access after calling lexer.advance()
     current_char: char,
+    errors: Vec<LexError>,
 }
 
 impl Lexer {
@@ -26,6 +27,7 @@ impl Lexer {
             reserved_words: HashMap::new(),
             // Initial value is inconsequential. Just to satisfy compiler
             current_char: ' ',
+            errors: vec![],
         };
 
         lexer
@@ -271,7 +273,11 @@ fn parse_string(mut lexer: Lexer) -> Lexer {
     }
 
     if lexer.at_end_of_source_text() {
-        crate::error(lexer.line, "Unterminated string");
+        let error = LexError {
+            line: lexer.line,
+            message: String::from("Unterminated string"),
+        };
+        lexer.errors.push(error);
     }
 
     lexer = advance(lexer);
@@ -369,4 +375,9 @@ fn is_alpha(c: char) -> bool {
 
 fn is_alphanumeric(c: char) -> bool {
     return is_alpha(c) || is_digit(c);
+}
+
+pub struct LexError {
+    pub line: i32,
+    pub message: String,
 }
