@@ -110,10 +110,10 @@ impl Parser {
             let operator = self.previous().clone();
             let right = self.parse_unary()?;
 
-            Expr::Unary {
+            return Ok(Expr::Unary {
                 operator,
                 right: Box::new(right),
-            };
+            });
         }
 
         return self.parse_primary();
