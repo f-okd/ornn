@@ -6,7 +6,7 @@ pub enum Literal {
     Nil,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum TokenType {
     // Single-character tokens
     LEFT_PAREN,
