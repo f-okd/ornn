@@ -6,9 +6,9 @@ use crate::token::{Literal, Token, TokenType};
 pub struct Lexer {
     source_text: String,
     pub tokens: Vec<Token>,
-    start: i32,
+    start: usize,
     /// Index of the character we're about to consume
-    cursor: i32,
+    cursor: usize,
     line: i32,
     reserved_words: HashMap<String, TokenType>,
     /// Only access after calling lexer.advance()
@@ -84,7 +84,7 @@ impl Lexer {
 
     fn at_end_of_source_text(&self) -> bool {
         let source_length = self.source_text.len();
-        return self.cursor >= source_length as i32;
+        return self.cursor >= source_length;
     }
 
     /// Check whether the next character in the source text is equal to some expected character
@@ -110,11 +110,11 @@ impl Lexer {
 
     /// Check the value of the next character in the source text without consuming the character.
     fn peek(&self) -> char {
-        if (self.cursor + 1) >= self.source_text.len() as i32 {
+        if self.at_end_of_source_text() {
             return '\0';
         }
 
-        let next_char = char_at(self.source_text.clone(), self.cursor as usize);
+        let next_char = char_at(self.source_text.clone(), self.cursor);
         match next_char {
             Ok(char) => char,
             Err(err) => {
@@ -125,11 +125,11 @@ impl Lexer {
 
     /// Check the value of the character two positions ahead of the most recently consumed character.
     fn peek_next(&self) -> char {
-        if self.at_end_of_source_text() {
+        if self.cursor + 1 >= self.source_text.len() {
             return '\0';
         }
 
-        let next_next_char = char_at(self.source_text.clone(), self.cursor as usize);
+        let next_next_char = char_at(self.source_text.clone(), self.cursor + 1);
         match next_next_char {
             Ok(char) => char,
             Err(err) => {
@@ -251,7 +251,7 @@ fn scan_token(mut lexer: Lexer) -> Lexer {
  * and cursor points to the one after it. peek() is for looking ahead without consuming.
  */
 fn advance(mut lexer: Lexer) -> Lexer {
-    let current_char = char_at(lexer.source_text.clone(), lexer.cursor as usize);
+    let current_char = char_at(lexer.source_text.clone(), lexer.cursor);
     match current_char {
         Ok(char) => {
             lexer.cursor += 1;
