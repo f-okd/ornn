@@ -13,7 +13,7 @@ pub struct Lexer {
     reserved_words: HashMap<String, TokenType>,
     /// Only access after calling lexer.advance()
     current_char: char,
-    errors: Vec<LexError>,
+    pub errors: Vec<LexError>,
 }
 
 impl Lexer {
@@ -23,7 +23,7 @@ impl Lexer {
             tokens: vec![],
             start: 0,
             cursor: 0,
-            line: 0,
+            line: 1,
             reserved_words: HashMap::new(),
             // Initial value is inconsequential. Just to satisfy compiler
             current_char: ' ',
@@ -232,8 +232,10 @@ fn scan_token(mut lexer: Lexer) -> Lexer {
             } else if is_alpha(char) {
                 lexer = parse_identifier(lexer);
             } else {
-                // error(&lexer, lexer.line, "Unrecognised character");
-                panic!("Unrecognised character"); // Todo: Use error handling at main.rs
+                lexer.errors.push(LexError {
+                    line: lexer.line,
+                    message: format!("Unrecognised character: {}", char),
+                });
             }
         }
     }
@@ -273,11 +275,10 @@ fn parse_string(mut lexer: Lexer) -> Lexer {
     }
 
     if lexer.at_end_of_source_text() {
-        let error = LexError {
+        lexer.errors.push(LexError {
             line: lexer.line,
             message: String::from("Unterminated string"),
-        };
-        lexer.errors.push(error);
+        });
     }
 
     lexer = advance(lexer);
@@ -310,7 +311,12 @@ fn parse_number(mut lexer: Lexer) -> Lexer {
         Ok(num) => {
             lexer = add_token_with_literal(lexer, TokenType::NUMBER, Literal::Number(num));
         }
-        Err(err) => panic!("Unexpected error while parsing number: {}", err),
+        Err(parse_err) => {
+            lexer.errors.push(LexError {
+                line: lexer.line,
+                message: parse_err.to_string(),
+            });
+        }
     }
 
     return lexer;

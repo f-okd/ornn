@@ -4,6 +4,7 @@ use crate::{
     ast::printer::print_expression,
     lexer::{Lexer, scan_tokens},
     parser::Parser,
+    token::{Token, TokenType},
 };
 
 mod ast;
@@ -56,7 +57,18 @@ impl Ornn {
 
     fn run(&mut self, command: &str) {
         let mut lexer = Lexer::new(command);
+
+        println!("Scanning:");
         lexer = scan_tokens(lexer);
+
+        if lexer.errors.len() > 0 {
+            for err in lexer.errors.iter() {
+                self.scan_error(err.line, err.message.as_str());
+            }
+            return;
+        }
+
+        println!("Parsing:");
         let mut parser = Parser::new(lexer.tokens);
         let expr = parser.parse();
 
@@ -66,7 +78,7 @@ impl Ornn {
                 println!("{}", expr_as_string)
             }
             Err(parse_err) => {
-                self.error(parse_err.token.line, parse_err.message.as_str());
+                self.parse_error(parse_err.token, parse_err.message.as_str());
             }
         }
 
@@ -78,12 +90,28 @@ impl Ornn {
         // println!("Finished printing tokens");
     }
 
-    fn error(&mut self, line: i32, message: &str) {
+    fn scan_error(&mut self, line: i32, message: &str) {
         self.report(line, "", message);
     }
 
+    fn parse_error(&mut self, token: Token, message: &str) {
+        if token.token_type == TokenType::EOF {
+            self.report(token.line, "at end", message);
+        } else {
+            self.report(
+                token.line,
+                format!("at '{}'", token.lexeme).as_str(),
+                message,
+            );
+        }
+    }
+
     fn report(&mut self, line: i32, location: &str, message: &str) {
-        eprintln!("[Line {}] Error {}: {}", line, location, message);
+        if location == "" {
+            eprintln!("[Line {}] Error: {}", line, message);
+        } else {
+            eprintln!("[Line {}] Error {}: {}", line, location, message);
+        }
         self.had_error = true;
         return;
     }
