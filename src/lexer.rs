@@ -90,7 +90,7 @@ impl Lexer {
             return false;
         };
 
-        let next_char = char_at(self.source_text.clone(), self.cursor as usize);
+        let next_char = char_at(self.source_text.clone(), self.cursor);
         match next_char {
             Ok(char) => {
                 if char == expected {
@@ -265,8 +265,7 @@ impl Lexer {
 
         self.advance();
 
-        let value =
-            &self.source_text[(self.start + 1) as usize..(self.cursor - 1) as usize].to_string(); //investigate borrowing logic here
+        let value = &self.source_text[(self.start + 1)..(self.cursor - 1)].to_string(); //investigate borrowing logic here
         self.add_token_with_literal(TokenType::STRING, Literal::Str(String::from(value)));
     }
 
@@ -284,7 +283,7 @@ impl Lexer {
         }
 
         let mut number = String::new();
-        self.source_text[self.start as usize..self.cursor as usize].clone_into(&mut number);
+        self.source_text[self.start..self.cursor].clone_into(&mut number);
 
         let number_as_float: Result<f64, ParseFloatError> = number.parse();
         match number_as_float {
