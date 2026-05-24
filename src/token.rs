@@ -1,3 +1,4 @@
+/// Raw literals hardcoded in source code by user
 #[derive(Debug, Clone)]
 pub enum Literal {
     Number(f64),
