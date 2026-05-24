@@ -90,7 +90,7 @@ impl Lexer {
             return false;
         };
 
-        let next_char = char_at(self.source_text.clone(), self.cursor);
+        let next_char = char_at(&self.source_text, self.cursor);
         match next_char {
             Ok(char) => {
                 if char == expected {
@@ -111,7 +111,7 @@ impl Lexer {
             return '\0';
         }
 
-        let next_char = char_at(self.source_text.clone(), self.cursor);
+        let next_char = char_at(&self.source_text, self.cursor);
         match next_char {
             Ok(char) => char,
             Err(err) => {
@@ -126,7 +126,7 @@ impl Lexer {
             return '\0';
         }
 
-        let next_next_char = char_at(self.source_text.clone(), self.cursor + 1);
+        let next_next_char = char_at(&self.source_text, self.cursor + 1);
         match next_next_char {
             Ok(char) => char,
             Err(err) => {
@@ -235,7 +235,7 @@ impl Lexer {
      * and cursor points to the one after it. peek() is for looking ahead without consuming.
      */
     fn advance(&mut self) -> char {
-        let current_char = char_at(self.source_text.clone(), self.cursor);
+        let current_char = char_at(&self.source_text, self.cursor);
         match current_char {
             Ok(char) => {
                 self.cursor += 1;
@@ -305,8 +305,7 @@ impl Lexer {
         }
 
         let text = &self.source_text[self.start..self.cursor];
-        let reserved_words = self.reserved_words.clone();
-        let token_type = reserved_words.get(text);
+        let token_type = self.reserved_words.get(text);
 
         match token_type {
             Some(token_type) => {
@@ -328,7 +327,7 @@ impl Lexer {
     }
 }
 
-fn char_at(text: String, index: usize) -> Result<char, String> {
+fn char_at(text: &str, index: usize) -> Result<char, String> {
     let mut string_iterator = text.chars();
     let char_at = string_iterator.nth(index);
 
