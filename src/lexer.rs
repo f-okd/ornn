@@ -11,8 +11,6 @@ pub struct Lexer {
     cursor: usize,
     line: i32,
     reserved_words: HashMap<String, TokenType>,
-    /// Only access after calling lexer.advance()
-    current_char: char,
     pub errors: Vec<LexError>,
 }
 
@@ -26,7 +24,6 @@ impl Lexer {
             line: 1,
             reserved_words: HashMap::new(),
             // Initial value is inconsequential. Just to satisfy compiler
-            current_char: ' ',
             errors: vec![],
         };
 
@@ -137,222 +134,199 @@ impl Lexer {
             }
         }
     }
-}
 
-pub fn scan_tokens(mut lexer: Lexer) -> Lexer {
-    while !(lexer.at_end_of_source_text()) {
-        lexer.start = lexer.cursor;
-        lexer = scan_token(lexer);
+    pub fn scan_tokens(&mut self) {
+        while !(self.at_end_of_source_text()) {
+            self.start = self.cursor;
+            self.scan_token();
+        }
+
+        let token = Token::new(TokenType::EOF, "", Literal::Nil, self.line);
+        self.tokens.push(token);
     }
 
-    let token = Token::new(TokenType::EOF, "", Literal::Nil, lexer.line);
-    lexer.tokens.push(token);
-    return lexer;
-}
+    fn scan_token(&mut self) {
+        let char = self.advance();
 
-fn scan_token(mut lexer: Lexer) -> Lexer {
-    lexer = advance(lexer);
-    let char = lexer.current_char;
-
-    match char {
-        // These lexemes are only one char
-        '(' => lexer = add_token(lexer, TokenType::LEFT_PAREN),
-        ')' => lexer = add_token(lexer, TokenType::RIGHT_PAREN),
-        '{' => lexer = add_token(lexer, TokenType::LEFT_BRACE),
-        '}' => lexer = add_token(lexer, TokenType::RIGHT_BRACE),
-        ',' => lexer = add_token(lexer, TokenType::COMMA),
-        '.' => lexer = add_token(lexer, TokenType::DOT),
-        '-' => lexer = add_token(lexer, TokenType::MINUS),
-        '+' => lexer = add_token(lexer, TokenType::PLUS),
-        ':' => lexer = add_token(lexer, TokenType::SEMICOLON),
-        '*' => lexer = add_token(lexer, TokenType::STAR),
-        //
-        '!' => {
-            if lexer.next_char_has('=') {
-                lexer.cursor += 1;
-                lexer = add_token(lexer, TokenType::BANG_EQUAL);
-            } else {
-                lexer = add_token(lexer, TokenType::BANG);
-            }
-            return lexer;
-        }
-        '=' => {
-            if lexer.next_char_has('=') {
-                lexer.cursor += 1;
-                lexer = add_token(lexer, TokenType::EQUAL_EQUAL);
-            } else {
-                lexer = add_token(lexer, TokenType::EQUAL);
-            }
-            return lexer;
-        }
-        '<' => {
-            if lexer.next_char_has('=') {
-                lexer.cursor += 1;
-                lexer = add_token(lexer, TokenType::LESS_EQUAL);
-            } else {
-                lexer = add_token(lexer, TokenType::LESS);
-            }
-            return lexer;
-        }
-        '>' => {
-            if lexer.next_char_has('=') {
-                lexer.cursor += 1;
-                lexer = add_token(lexer, TokenType::GREATER_EQUAL);
-            } else {
-                lexer = add_token(lexer, TokenType::GREATER);
-            }
-            return lexer;
-        }
-        '/' => {
-            if lexer.next_char_has('/') {
-                while lexer.peek() != '\n' && !lexer.at_end_of_source_text() {
-                    lexer = advance(lexer);
+        match char {
+            // These lexemes are only one char
+            '(' => self.add_token(TokenType::LEFT_PAREN),
+            ')' => self.add_token(TokenType::RIGHT_PAREN),
+            '{' => self.add_token(TokenType::LEFT_BRACE),
+            '}' => self.add_token(TokenType::RIGHT_BRACE),
+            ',' => self.add_token(TokenType::COMMA),
+            '.' => self.add_token(TokenType::DOT),
+            '-' => self.add_token(TokenType::MINUS),
+            '+' => self.add_token(TokenType::PLUS),
+            ':' => self.add_token(TokenType::SEMICOLON),
+            '*' => self.add_token(TokenType::STAR),
+            //
+            '!' => {
+                if self.next_char_has('=') {
+                    self.cursor += 1;
+                    self.add_token(TokenType::BANG_EQUAL);
+                } else {
+                    self.add_token(TokenType::BANG);
                 }
-            } else {
-                lexer = add_token(lexer, TokenType::SLASH);
             }
-            return lexer;
+            '=' => {
+                if self.next_char_has('=') {
+                    self.cursor += 1;
+                    self.add_token(TokenType::EQUAL_EQUAL);
+                } else {
+                    self.add_token(TokenType::EQUAL);
+                }
+            }
+            '<' => {
+                if self.next_char_has('=') {
+                    self.cursor += 1;
+                    self.add_token(TokenType::LESS_EQUAL);
+                } else {
+                    self.add_token(TokenType::LESS);
+                }
+            }
+            '>' => {
+                if self.next_char_has('=') {
+                    self.cursor += 1;
+                    self.add_token(TokenType::GREATER_EQUAL);
+                } else {
+                    self.add_token(TokenType::GREATER);
+                }
+            }
+            '/' => {
+                if self.next_char_has('/') {
+                    while self.peek() != '\n' && !self.at_end_of_source_text() {
+                        self.advance();
+                    }
+                } else {
+                    self.add_token(TokenType::SLASH);
+                }
+            }
+            // Ignore whitespace
+            ' ' | '\r' | '\t' => return,
+            '\n' => {
+                self.line += 1;
+            }
+            // Literals
+            '"' => {
+                self.parse_string();
+            }
+            _ => {
+                if is_digit(char) {
+                    self.parse_number();
+                } else if is_alpha(char) {
+                    self.parse_identifier();
+                } else {
+                    self.errors.push(LexError {
+                        line: self.line,
+                        message: format!("Unrecognised character: {}", char),
+                    });
+                }
+            }
         }
-        // Ignore whitespace
-        ' ' => return lexer,
-        '\r' => return lexer,
-        '\t' => return lexer,
-        '\n' => {
-            lexer.line += 1;
-            return lexer;
+    }
+
+    /**
+     *  cursor always points to the index of the next character to be consumed.
+     * advance() reads the character at cursor, stores it in current_char,
+     * then increments cursor to point past it.
+     *
+     * After advance() returns, current_char holds the character we just consumed,
+     * and cursor points to the one after it. peek() is for looking ahead without consuming.
+     */
+    fn advance(&mut self) -> char {
+        let current_char = char_at(self.source_text.clone(), self.cursor);
+        match current_char {
+            Ok(char) => {
+                self.cursor += 1;
+                return char;
+            }
+            Err(err) => {
+                panic!("{}", err);
+            }
         }
-        // Literals
-        '"' => {
-            lexer = parse_string(lexer);
-            return lexer;
+    }
+
+    fn parse_string(&mut self) {
+        while self.peek() != '"' && !self.at_end_of_source_text() {
+            if self.peek() == '\n' {
+                self.line += 1;
+            }
+
+            self.advance();
         }
-        _ => {
-            if is_digit(char) {
-                lexer = parse_number(lexer);
-            } else if is_alpha(char) {
-                lexer = parse_identifier(lexer);
-            } else {
-                lexer.errors.push(LexError {
-                    line: lexer.line,
-                    message: format!("Unrecognised character: {}", char),
+
+        if self.at_end_of_source_text() {
+            self.errors.push(LexError {
+                line: self.line,
+                message: String::from("Unterminated string"),
+            });
+        }
+
+        self.advance();
+
+        let value =
+            &self.source_text[(self.start + 1) as usize..(self.cursor - 1) as usize].to_string(); //investigate borrowing logic here
+        self.add_token_with_literal(TokenType::STRING, Literal::Str(String::from(value)));
+    }
+
+    fn parse_number(&mut self) {
+        while is_digit(self.peek()) {
+            self.advance();
+        }
+
+        if self.peek() == '.' && is_digit(self.peek_next()) {
+            self.advance();
+
+            while is_digit(self.peek()) {
+                self.advance();
+            }
+        }
+
+        let mut number = String::new();
+        self.source_text[self.start as usize..self.cursor as usize].clone_into(&mut number);
+
+        let number_as_float: Result<f64, ParseFloatError> = number.parse();
+        match number_as_float {
+            Ok(num) => {
+                self.add_token_with_literal(TokenType::NUMBER, Literal::Number(num));
+            }
+            Err(parse_err) => {
+                self.errors.push(LexError {
+                    line: self.line,
+                    message: parse_err.to_string(),
                 });
             }
         }
     }
-    return lexer;
-}
 
-/**
- *  cursor always points to the index of the next character to be consumed.
- * advance() reads the character at cursor, stores it in current_char,
- * then increments cursor to point past it.
- *
- * After advance() returns, current_char holds the character we just consumed,
- * and cursor points to the one after it. peek() is for looking ahead without consuming.
- */
-fn advance(mut lexer: Lexer) -> Lexer {
-    let current_char = char_at(lexer.source_text.clone(), lexer.cursor);
-    match current_char {
-        Ok(char) => {
-            lexer.cursor += 1;
-            lexer.current_char = char;
+    fn parse_identifier(&mut self) {
+        while is_alphanumeric(self.peek()) {
+            self.advance();
         }
-        Err(err) => {
-            panic!("{}", err);
+
+        let text = &self.source_text[self.start..self.cursor];
+        let reserved_words = self.reserved_words.clone();
+        let token_type = reserved_words.get(text);
+
+        match token_type {
+            Some(token_type) => {
+                self.add_token(token_type.clone());
+            }
+            None => self.add_token(TokenType::IDENTIFIER),
         }
     }
 
-    return lexer;
-}
-
-fn parse_string(mut lexer: Lexer) -> Lexer {
-    while lexer.peek() != '"' && !lexer.at_end_of_source_text() {
-        if lexer.peek() == '\n' {
-            lexer.line += 1;
-        }
-
-        lexer = advance(lexer);
+    fn add_token(&mut self, token_type: TokenType) {
+        return self.add_token_with_literal(token_type, Literal::Nil);
     }
 
-    if lexer.at_end_of_source_text() {
-        lexer.errors.push(LexError {
-            line: lexer.line,
-            message: String::from("Unterminated string"),
-        });
+    fn add_token_with_literal(&mut self, token_type: TokenType, literal: Literal) {
+        let text = &self.source_text[self.start..self.cursor];
+
+        self.tokens
+            .push(Token::new(token_type, text, literal, self.line));
     }
-
-    lexer = advance(lexer);
-
-    let value =
-        &lexer.source_text[(lexer.start + 1) as usize..(lexer.cursor - 1) as usize].to_string(); //investigate borrowing logic here
-    lexer = add_token_with_literal(lexer, TokenType::STRING, Literal::Str(String::from(value)));
-
-    return lexer;
-}
-
-fn parse_number(mut lexer: Lexer) -> Lexer {
-    while is_digit(lexer.peek()) {
-        lexer = advance(lexer);
-    }
-
-    if lexer.peek() == '.' && is_digit(lexer.peek_next()) {
-        lexer = advance(lexer);
-
-        while is_digit(lexer.peek()) {
-            lexer = advance(lexer);
-        }
-    }
-
-    let mut number = String::new();
-    lexer.source_text[lexer.start as usize..lexer.cursor as usize].clone_into(&mut number);
-
-    let number_as_float: Result<f64, ParseFloatError> = number.parse();
-    match number_as_float {
-        Ok(num) => {
-            lexer = add_token_with_literal(lexer, TokenType::NUMBER, Literal::Number(num));
-        }
-        Err(parse_err) => {
-            lexer.errors.push(LexError {
-                line: lexer.line,
-                message: parse_err.to_string(),
-            });
-        }
-    }
-
-    return lexer;
-}
-
-fn parse_identifier(mut lexer: Lexer) -> Lexer {
-    while is_alphanumeric(lexer.peek()) {
-        lexer = advance(lexer);
-    }
-
-    let text = &lexer.source_text[lexer.start as usize..lexer.cursor as usize];
-    let reserved_words = lexer.reserved_words.clone();
-    let token_type = reserved_words.get(text);
-
-    match token_type {
-        Some(token_type) => {
-            lexer = add_token(lexer, token_type.clone());
-        }
-        None => lexer = add_token(lexer, TokenType::IDENTIFIER),
-    }
-
-    return lexer;
-}
-
-fn add_token(lexer: Lexer, token_type: TokenType) -> Lexer {
-    return add_token_with_literal(lexer, token_type, Literal::Nil);
-}
-
-fn add_token_with_literal(mut lexer: Lexer, token_type: TokenType, literal: Literal) -> Lexer {
-    let text = &lexer.source_text[lexer.start as usize..lexer.cursor as usize];
-
-    lexer
-        .tokens
-        .push(Token::new(token_type, text, literal, lexer.line));
-
-    return lexer;
 }
 
 fn char_at(text: String, index: usize) -> Result<char, String> {

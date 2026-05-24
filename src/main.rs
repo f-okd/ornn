@@ -2,7 +2,7 @@ use std::{env, io};
 
 use crate::{
     ast::printer::print_expression,
-    lexer::{Lexer, scan_tokens},
+    lexer::Lexer,
     parser::Parser,
     token::{Token, TokenType},
 };
@@ -59,7 +59,7 @@ impl Ornn {
         let mut lexer = Lexer::new(command);
 
         println!("Scanning:");
-        lexer = scan_tokens(lexer);
+        lexer.scan_tokens();
 
         if lexer.errors.len() > 0 {
             for err in lexer.errors.iter() {
