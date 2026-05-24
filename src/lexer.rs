@@ -90,10 +90,10 @@ impl Lexer {
             return false;
         };
 
-        let next_char = char_at(&self.source_text, self.cursor);
-        match next_char {
-            Ok(char) => {
-                if char == expected {
+        let char = char_at(&self.source_text, self.cursor);
+        match char {
+            Ok(c) => {
+                if c == expected {
                     return true;
                 } else {
                     return false;
@@ -111,9 +111,9 @@ impl Lexer {
             return '\0';
         }
 
-        let next_char = char_at(&self.source_text, self.cursor);
-        match next_char {
-            Ok(char) => char,
+        let char = char_at(&self.source_text, self.cursor);
+        match char {
+            Ok(c) => c,
             Err(err) => {
                 panic!("{}", err);
             }
@@ -126,9 +126,9 @@ impl Lexer {
             return '\0';
         }
 
-        let next_next_char = char_at(&self.source_text, self.cursor + 1);
-        match next_next_char {
-            Ok(char) => char,
+        let next_char = char_at(&self.source_text, self.cursor + 1);
+        match next_char {
+            Ok(c) => c,
             Err(err) => {
                 panic!("{}", err);
             }
