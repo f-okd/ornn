@@ -1,7 +1,11 @@
-use std::{env, io};
+use std::{
+    env,
+    io::{self, Write},
+};
 
 use crate::{
     ast::printer::print_expression,
+    interpreter::Interpreter,
     lexer::Lexer,
     parser::Parser,
     token::{Token, TokenType},
@@ -42,24 +46,29 @@ impl Ornn {
         let mut command = String::new();
 
         loop {
+            print!("> ");
+            io::stdout().flush().unwrap();
             command.clear();
             match io::stdin().read_line(&mut command) {
                 Ok(_n) => {}
                 Err(error) => println!("erorr: {error}"),
             }
 
+            // Look for EOF
             if command.as_str() == "" {
                 break;
+            } else if command.trim().is_empty() {
+                continue;
             }
 
             self.run(command.as_str());
+            println!("\n\n");
         }
     }
 
     fn run(&mut self, command: &str) {
         let mut lexer = Lexer::new(command);
 
-        println!("Scanning:");
         lexer.scan_tokens();
 
         if lexer.errors.len() > 0 {
@@ -69,14 +78,21 @@ impl Ornn {
             return;
         }
 
-        println!("Parsing:");
         let mut parser = Parser::new(lexer.tokens);
         let expr = parser.parse();
 
         match expr {
             Ok(expr) => {
-                let expr_as_string = print_expression(&expr);
-                println!("{}", expr_as_string)
+                // pretty printing:
+                // let expr_as_string = print_expression(&expr);
+                let interpreter = Interpreter::new();
+                let value = interpreter.evaluate_expression(&expr);
+                match value {
+                    Ok(val) => println!("{}", val),
+                    Err(runtime_err) => {
+                        self.parse_error(runtime_err.token, runtime_err.message.as_str());
+                    }
+                }
             }
             Err(parse_err) => {
                 self.parse_error(parse_err.token, parse_err.message.as_str());

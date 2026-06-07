@@ -1,3 +1,5 @@
+use core::fmt;
+
 /// Raw literals hardcoded in source code by user
 #[derive(Debug, Clone)]
 pub enum Literal {
@@ -79,5 +81,11 @@ impl Token {
             self.lexeme.as_str(),
             self.literal,
         );
+    }
+}
+
+impl fmt::Display for Token {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{}", self.lexeme)
     }
 }
