@@ -1,3 +1,11 @@
+/// Given a flat token stream. The parser should produce a tree shaped to
+/// respect syntax rules (AST duh). The rules are the precedence hierarchy below.
+///
+/// Precedence describes how tightly an operator binds to an expression or
+/// literal. i.e. which expression must be evaluated/computed first.
+///
+/// Given: [2, +, 3, *, 4]. You should expect that the * node sits closer to the
+/// 3 and 4 leaves, as their parent. While the + would be at the root.
 use crate::{
     ast::expressions::Expr,
     token::{Literal, Token, TokenType},
@@ -10,9 +18,9 @@ use crate::{
 /// term → factor ( ( "-" | "+" ) factor )* ;
 /// factor → unary ( ( "/" | "*" ) unary )* ;
 /// unary → ( "!" | "-" ) unary
-/// | primary ;
+///     | primary ;
 /// primary → NUMBER | STRING | "true" | "false" | "nil"
-/// | "(" expression ")" ;
+///     | "(" expression ")" ;
 pub struct Parser {
     tokens: Vec<Token>,
     cursor: usize,
